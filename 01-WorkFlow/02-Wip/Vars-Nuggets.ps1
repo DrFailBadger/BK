@@ -12,9 +12,6 @@ $Servar = $ServiceList[0].name
 $Servar1 = $($ServiceList[0].name) # subexpression anyting after the $(will be exectued as code)
 
 
-$Servar
-$Servar1
-
 $a = "this is the new
 string value
 over here"

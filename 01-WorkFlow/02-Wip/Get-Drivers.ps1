@@ -52,13 +52,8 @@ $Driversall = Get-WindowsDriver -Online #| Where-Object {$_.providername -eq "He
 #Remove Drivers that have been installed in the last day, this checks the driver then the folder where the inf is created for the last modified date.
 foreach ($Drive in $Driversall) {
 
-    #$DriverName = $drive.Driver
-    #$Locaiton = $drive.OriginalFileName
     $GCI = Get-ChildItem $drive.OriginalFileName -Directory 
-    
     if ($gci.LastAccessTime -ge $(get-date).adddays(-1)) {
-
         pnputil -f -d $drive.Driver
-        
     }
 }
