@@ -134,8 +134,7 @@ get-pnplistitem -list $SharepointList -Query "$CalmQuery"
 
 
 $CalmQuery = "<View><Query><Where><Eq><FieldRef Name='AssignedTo' /><Value Type='User'>$PSListUserAssigned</Value></Eq></Where></Query></View>"
-get-pnplistitem -list $SharepointList -Query $CalmQuery | fl *
-
+get-pnplistitem -list $SharepointList -Query $CalmQuery
 
 @{
     "Vendor"=$PslistVendor;
@@ -151,3 +150,22 @@ get-pnplistitem -list $SharepointList -Query $CalmQuery | fl *
 }
 
 
+
+$ListName = $SharepointList 
+$Fields = Get-PnPField -List $SharepointList   
+$global:FieldsList = ""
+foreach($Field in $Fields)
+{
+    $global:FieldsList = $global:FieldsList + $Field.InternalName + ','
+}
+
+$Items = (Get-PnPListItem -List $ListName -Fields $global:FieldsList).FieldValues    
+foreach($Item in $Items)
+{
+    Write-Host $Item.Title -ForegroundColor Yellow
+    foreach($Field in $Fields)
+    {
+        Write-Host $Field.InternalName -ForegroundColor Yellow
+        Write-Host $Item[$Field.InternalName]
+    }
+}
