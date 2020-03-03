@@ -56,9 +56,9 @@ Exit-PSSession
 ######Sharepoint configuration
 Install-Module sharepointpnppowershell2019
 get-module sharepointpnppowershell2019
+Import-Module sharepointpnppowershell2019
 get-command -module sharepointpnppowershell2019
 $sharepointURl = "http://sharepointserve"
-Connect-PnPOnline -Url -credentials $credential
 ## current conenction if on VM
 Connect-PnPOnline -url $sharepointURl -CurrentCredentials
 ### connection to site pass creds
@@ -74,8 +74,8 @@ New-PnPList -Title $SharepointList -Url $SharepointList -Template GenericList -O
 
 $SharepointList = "Badger"
 
-##crate column for list
-Add-PnPField -list $SharepointList -DisplayName "Vendor" -InternalName "Vendor" -type Text -AddToDefaultView 
+##crate column for lis
+Add-PnPField -list $SharepointList -DisplayName "Vendor" -InternalName "Vendor" -type Text -AddToDefaultView
 Add-PnPField -list $SharepointList -DisplayName "AppName" -InternalName "AppName" -type Text -AddToDefaultView 
 Add-PnPField -list $SharepointList -DisplayName "Version" -InternalName "Version" -type Number -AddToDefaultView
 Add-PnPField -list $SharepointList -DisplayName "BrickName" -InternalName "BrickName" -type Text -AddToDefaultView  
@@ -85,22 +85,32 @@ Add-PnPField -list $SharepointList -DisplayName "AD Group" -InternalName "ADGrou
 Add-PnPField -list $SharepointList -DisplayName "Assigned to:" -InternalName "AssignedTo" -type User -AddToDefaultView 
 Add-PnPField -list $SharepointList -DisplayName "Architecture" -InternalName "Architecture" -type MultiChoice -AddToDefaultView -Choices "x86","x64", "Both"
 Add-PnPField -list $SharepointList -DisplayName "Target" -InternalName "Target" -type MultiChoice -AddToDefaultView -Choices "Windows 7 32bit","Windows 7 64bit", "Windows 10", "Mac"
+
+Add-PnPField -list $SharepointList -DisplayName "Status" -InternalName "Status" -type MultiChoice -AddToDefaultView -Choices "New","New-Assigned", "Discovery","Discovery On-Hold","Discovery Signed-Off", "Packaging","Packaging on-Hold", "QA", "Pre-Prod","Pre-Prod on-hold", "Prod", "Prod On-hold", "Pilot", "Live", "Completed"
+Add-PnPField -list $SharepointList -DisplayName "Requestor" -InternalName "Requestor" -type Text -AddToDefaultView
+Add-PnPField -list $SharepointList -DisplayName "Requestor Email" -InternalName "RequestorEmail" -type Text -AddToDefaultView
+Add-PnPField -list $SharepointList -DisplayName "Requestor Phone" -InternalName "RequestorPhone" -type Text -AddToDefaultView
 #example # PS:>Add-PnPField -List "Demo list" -DisplayName "Speakers" -InternalName "SPSSpeakers" -Type MultiChoice -Group "Demo Group" -AddToDefaultView -Choices "Obiwan Kenobi","Darth Vader", "Anakin Skywalker"
 
 Add-PnPListItem -List $Badger -ContentType 
 get-pnplistitem -List "badger"
 Set-PnPField -List $SharepointList 
 
-[String]$PslistAppName = 'Frogger'
-[String]$PslistVendor = 'Apper'
-[String]$PslistVersion = '12.0.29'
-[String]$PSListRelease = 'R02'
+[String]$PslistAppName = 'Frogger2123123'
+[String]$PslistVendor = 'Apper2123123'
+[String]$PslistVersion = '12.0.222911231'
+[String]$PSListRelease = 'R03123123'
 [String]$PSListArch = "X86"
 [String]$PSListAppType = "AppV5"
 #[String]$PSListUserAssigned = "User02"
 [String]$PSListUserAssigned = "User01"
-
 [String]$PSListTarget = "Windows 10"
+[String]$PSListRequestor = "John Smith"
+[String]$PSListRequestorEmail = "John.Smith@badger.com"
+[String]$PSListRequestorPhone = "01234567890"
+[String]$PSListStatus ="New"
+[String]$PSListUserAssigned = $null
+
 
 switch ($PSListAppType){
     'MSI'        {$PSListAppTypeSwitch = 'MSI'}
@@ -114,29 +124,8 @@ switch ($PSListAppType){
 #Create ADGroup
 [String]$ADGroup = "SFTG-$pslistbrickname"
 
-#Add item to sharepoint list
-Add-PnPListItem -List $sharepointlist -Values @{
-                                                "Vendor"=$PslistVendor;
-                                                "AppName" = $PslistAppName;
-                                                "Version"=$PslistVersion;
-                                                "BrickName"=$PSListBrickName;
-                                                "Release"=$PSListRelease;
-                                                "Architecture"=$PSListArch;
-                                                "ADGroup"=$ADGroup;
-                                                "Target"=$PSListTarget;
-                                                "AssignedTo"=$PSListUserAssigned;
-                                                "AppType"=$PSListAppType
-                                            }
 
-
-
-get-pnplistitem -list $SharepointList -Query "$CalmQuery"
-
-
-$CalmQuery = "<View><Query><Where><Eq><FieldRef Name='AssignedTo' /><Value Type='User'>$PSListUserAssigned</Value></Eq></Where></Query></View>"
-get-pnplistitem -list $SharepointList -Query $CalmQuery
-
-@{
+$PsListValues =  @{
     "Vendor"=$PslistVendor;
     "AppName" = $PslistAppName;
     "Version"=$PslistVersion;
@@ -146,10 +135,205 @@ get-pnplistitem -list $SharepointList -Query $CalmQuery
     "ADGroup"=$ADGroup;
     "Target"=$PSListTarget;
     "AssignedTo"=$PSListUserAssigned;
-    "AppType"=$PSListAppType
+    "AppType"=$PSListAppType;
+    "Requestor"=$PSListRequestor;
+    "RequestorEmail"=$PSListRequestorEmail;
+    "RequestorPhone"=$PSListRequestorPhone;
+    "Status"=$PSListStatus
 }
+#Add item to sharepoint list
+####NEW###
+Add-PnPListItem -List $sharepointlist -Values $PsListValues
+###Update###
+$PSListIdentity = 1
+Set-PnplistItem -list $sharepointlist -identity $psListIdentity -Values $PsListValues
 
 
+
+switch ($PSListStatus){
+    'New'                       {$PSListStatusActual = 'MSI'}
+    'New-Assigned'              {$PSListStatusActual = 'SCP'}
+    'Discovery'                 {$PSListStatusActual = 'AV5'}
+    'Discovery On-Hold'         {$PSListStatusActual = 'AV4'}
+    'Discovery Signed-Off'      {$PSListStatusActual = 'Oth'}
+    'Packaging'                 {$PSListStatusActual = 'MSI'}
+    'Packaging on-Hold'         {$PSListStatusActual = 'SCP'}
+    'QA'                        {$PSListStatusActual = 'AV5'}
+    'Pre-Prod'                  {$PSListStatusActual = 'AV4'}
+    'Pre-Prod on-hold'          {$PSListStatusActual = 'Oth'} 
+    'Prod'                      {$PSListStatusActual = 'MSI'}
+    'Prod On-Hold'              {$PSListStatusActual = 'SCP'}
+    'Pilot'                     {$PSListStatusActual = 'AV5'}
+    'Live'                      {$PSListStatusActual = 'AV4'}
+    'Completed'                 {$PSListStatusActual = 'AV4'}
+}
+ 
+
+
+
+######## where items is not completed
+
+
+###### where item is assinged to current user
+
+##### where item new status - no user assigned
+Clear-Variable $PSListUserAssigned
+
+##Set user
+$PSListUserAssigned = $null
+$PSListUserAssigned = "User01"
+$CalmQueryNotcompleted = "<View><Query><Where><Eq><FieldRef Name='Status' /><Value Type='Choice'></Value></Eq></Where></Query></View>"
+$CalmQuery = "<View><Query><Where><Contains><FieldRef Name='AssignedTo' /><Value Type='User'>$PSListUserAssigned</Value></Contains></Where></Query></View>"
+
+
+$PSListUserAssigned
+
+#When record is assigned to user
+$CamlQueryAssigned = 
+"<View>
+<Query>
+    <OrderBy>
+    <FieldRef Name='ID' Ascending='FALSE' />
+    </OrderBy>
+    <Where>
+    <Eq>
+        <FieldRef Name='AssignedTo' />
+        <Value Type='User'>$PSListUserAssigned</Value>
+    </Eq>
+    </Where>
+</Query>
+</View>"
+
+# When record is assigned to user but not completed
+$CamlQueryAssignedNotCompleted = 
+"<View>
+<Query> 
+    <OrderBy>
+    <FieldRef Name='ID' Ascending='FALSE' />
+    </OrderBy>
+    <Where>
+    <And>
+    <Eq>
+        <FieldRef Name='AssignedTo' />
+        <Value Type='User'>$PSListUserAssigned</Value>
+    </Eq>
+    <Neq>
+        <FieldRef Name='Status' />
+        <Value Type='Choice'>Completed</Value>
+    </Neq>
+    </And>
+    </Where>
+</Query>
+</View>"
+#all records
+$CamlQueryNotAssignedtoUser =
+"<View>
+<Query>
+<OrderBy>
+    <FieldRef Name='ID' />
+    </OrderBy>
+</Query>
+</View>"
+#all records not completed
+$CamlQueryNotAssignedtoUserCompleted =
+"<View>
+<Query>  
+    <OrderBy>
+    <FieldRef Name='ID' />
+    </OrderBy>
+    <Where>
+    <Neq>
+        <FieldRef Name='Status' />
+        <Value Type='Choice'>Completed</Value>
+    </Neq>
+    </Where>
+</Query>
+</View>"
+
+#New records not assigned
+$CamlQueryNotAssignNewStatus = 
+"<View>
+<Query>  
+    <OrderBy>
+    <FieldRef Name='ID' />
+    </OrderBy>
+    <Where>
+    <And>
+    <Eq>
+        <FieldRef Name='Status' />
+        <Value Type='Choice'>New</Value>
+    </Eq>
+    <IsNull>
+        <FieldRef Name='AssignedTo' />
+    </IsNull>
+    </And>
+    </Where>
+</Query>
+</View>"
+
+
+
+
+
+
+
+get-pnplistitem -list $SharepointList -Query $CalmQuery
+
+get-pnplistitem -list $SharepointList $calmq
+
+
+$Listitems = get-pnplistitem -list $SharepointList -Query $CamlQueryAssigned
+get-pnplistitem -list $SharepointList -Query $CamlQueryAssignedNotCompleted 
+get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignedtoUser
+get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignedtoUserCompleted
+$Listitems = get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignNewStatus 
+
+$listitems | select-object -property ID, Vendor
+
+get-pnplistitem -list $SharepointList -Query $NewCalm
+get-pnplistitem -list $SharepointList -Query $CalmQuery
+
+$table1 = @()
+
+foreach($listItem in $listItems){  
+    $table1 += New-object PsObject -property @{
+        ID = $listItem["ID"]
+        Vendor = $Listitem["Vendor"]
+        Appname = $Listitem["AppName"]
+        $Listitem["Version"]
+        $Listitem["BrickName"]
+        $Listitem["AppType"]
+        $Listitem["ADGroup"]
+        $Listitem["AssignedTo"]
+        $Listitem["Architecture"]
+        $Listitem["Target"]
+        $Listitem["Status"]
+        $Listitem["Requestor"]
+        $Listitem["RequestorEmail"]
+        $Listitem["RequestorPhone"]
+
+    }
+
+
+} 
+$table1
+
+
+
+$Listitems | Select-Object -property "ID";"RequestorPhone"
+$listItem
+$Table1
+$Listitem["Version"]
+$Listitem["BrickName"]
+$Listitem["AppType"]
+$Listitem["ADGroup"]
+$Listitem["AssignedTo"]
+$Listitem["Architecture"]
+$Listitem["Target"]
+$Listitem["Status"]
+$Listitem["Requestor"]
+$Listitem["RequestorEmail"]
+$Listitem["RequestorPhone"]
 
 $ListName = $SharepointList 
 $Fields = Get-PnPField -List $SharepointList   
@@ -169,3 +353,25 @@ foreach($Item in $Items)
         Write-Host $Item[$Field.InternalName]
     }
 }
+
+
+
+
+###
+
+
+
+
+$checkbox = $true
+$PSlistcurrentUser = "Badger.com\dave"
+
+
+if (!$checkbox) {
+    $PSlistAssigned = $null
+}
+else {
+    $PSlistAssigned = $PSlistcurrentUser
+    
+}
+
+$PSlistAssigned
