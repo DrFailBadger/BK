@@ -169,23 +169,18 @@ switch ($PSListStatus){
 }
  
 
-
-
 ######## where items is not completed
 
 
 ###### where item is assinged to current user
 
-##### where item new status - no user assigned
-Clear-Variable $PSListUserAssigned
+
 
 ##Set user
+
+
 $PSListUserAssigned = $null
 $PSListUserAssigned = "User01"
-$CalmQueryNotcompleted = "<View><Query><Where><Eq><FieldRef Name='Status' /><Value Type='Choice'></Value></Eq></Where></Query></View>"
-$CalmQuery = "<View><Query><Where><Contains><FieldRef Name='AssignedTo' /><Value Type='User'>$PSListUserAssigned</Value></Contains></Where></Query></View>"
-
-
 $PSListUserAssigned
 
 #When record is assigned to user
@@ -226,7 +221,7 @@ $CamlQueryAssignedNotCompleted =
 </Query>
 </View>"
 #all records
-$CamlQueryNotAssignedtoUser =
+$CamlQueryAllRecords =
 "<View>
 <Query>
 <OrderBy>
@@ -235,7 +230,7 @@ $CamlQueryNotAssignedtoUser =
 </Query>
 </View>"
 #all records not completed
-$CamlQueryNotAssignedtoUserCompleted =
+$CamlQueryAllRecordsNotCompleted =
 "<View>
 <Query>  
     <OrderBy>
@@ -271,22 +266,49 @@ $CamlQueryNotAssignNewStatus =
 </Query>
 </View>"
 
-
-
-
-
-
-
+<#
 get-pnplistitem -list $SharepointList -Query $CalmQuery
-
 get-pnplistitem -list $SharepointList $calmq
-
-
-$Listitems = get-pnplistitem -list $SharepointList -Query $CamlQueryAssigned
+get-pnplistitem -list $SharepointList -Query $CamlQueryAssigned
 get-pnplistitem -list $SharepointList -Query $CamlQueryAssignedNotCompleted 
-get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignedtoUser
-get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignedtoUserCompleted
-$Listitems = get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignNewStatus 
+get-pnplistitem -list $SharepointList -Query $CamlQueryAllRecords
+get-pnplistitem -list $SharepointList -Query $CamlQueryAllRecordsNotCompleted
+
+get-pnplistitem -list $SharepointList -Query $CamlQueryNotAssignNewStatus 
+#>
+
+
+#assinged to me completed 3
+# all records 0
+# all Records Assigned to me 1
+# not completed 2
+#not completed assigned to me 3
+# new records
+[int]$Checkbox = 0
+[int]$CheckBox += 1
+[int]$CheckBox -= 1
+[int]$CheckBox += 2
+[int]$CheckBox -= 2
+
+switch ($Checkbox) {
+    1  { $PSListQuery = $CamlQueryAssigned  }
+    2  { $PSListQuery = $CamlQueryAllRecordsNotCompleted }
+    3  { $PSListQuery = $CamlQueryAssignedNotCompleted   }
+    0  { $PSListQuery = $CamlQueryAllRecords  }
+    10 { $PSListQuery = $CamlQueryNotAssignNewStatus  }
+    Default {}
+}
+$PSListQuery = get-pnplistitem -list $SharepointList -Query $PSListQuery
+
+
+$Checkbox =0
+$PSListQuery
+
+
+
+
+
+
 
 $listitems | select-object -property ID, Vendor
 
@@ -295,28 +317,27 @@ get-pnplistitem -list $SharepointList -Query $CalmQuery
 
 $table1 = @()
 
-foreach($listItem in $listItems){  
+foreach($listItem in $PSListQuery){  
     $table1 += New-object PsObject -property @{
         ID = $listItem["ID"]
-        Vendor = $Listitem["Vendor"]
-        Appname = $Listitem["AppName"]
-        $Listitem["Version"]
-        $Listitem["BrickName"]
-        $Listitem["AppType"]
-        $Listitem["ADGroup"]
-        $Listitem["AssignedTo"]
-        $Listitem["Architecture"]
-        $Listitem["Target"]
-        $Listitem["Status"]
-        $Listitem["Requestor"]
-        $Listitem["RequestorEmail"]
-        $Listitem["RequestorPhone"]
-
+        Vendor          =   $Listitem["Vendor"]
+        Appname         =   $Listitem["AppName"]
+        Version         =   $Listitem["Version"]
+        BrickName       =   $Listitem["BrickName"]
+        AppType         =   $Listitem["AppType"]
+        'Ad Group'      =   $Listitem["ADGroup"]
+        'Assigned to'   =   $Listitem["AssignedTo"]
+        Architecture    =   $Listitem["Architecture"]
+        target          =   $Listitem["Target"]
+        Status          =   $Listitem["Status"]
+        Requestor       =   $Listitem["Requestor"]
+        Email           =   $Listitem["RequestorEmail"]
+        Phone           =   $Listitem["RequestorPhone"]
     }
 
-
 } 
-$table1
+
+$table1 > C:\HypervCopy\TEXT.txt
 
 
 
@@ -375,3 +396,12 @@ else {
 }
 
 $PSlistAssigned
+
+
+
+[System.Net.CredentialCache]$credentials = New-Object -TypeName System.Net.CredentialCache
+$ctx.Credentials = $credentials.DefaultNetworkCredentials
+
+
+(gmo -l *Sharepoint*).path
+
