@@ -26,7 +26,7 @@ Start-VM $VMname1
 Stop-vm $VMname1
 
 #Copy item to session
-Copy-Item -ToSession $s -path C:\HypervCopy -Destination C:\HypervCopy
+Copy-Item -ToSession $PSsession1 -path C:\HypervCopy\Orac -Destination C:\HypervCopy -Recurse -Force
 #Copy item from session
 Copy-Item -FromSession $s -path C:\HypervCopy -Destination C:\HypervCopy
 #recursive
@@ -43,7 +43,7 @@ get-command *pssession
 get-vm Sharepointserver1 | Select id
 
 #Create PSSession
-$PSsession1 = New-PSSession -VMName $VMname1 -Credential $credential
+$PSsession1 = New-PSSession -VMName $VMname2 -Credential $credential
 $S = New-PSSession -VMName $VMname1 -Credential $credential
 #Remove Session
 Remove-PSSession $s
